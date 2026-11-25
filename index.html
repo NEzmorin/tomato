@@ -129,7 +129,15 @@ canvas.addEventListener("pointerdown",e=>{
  e.preventDefault();
 });
 function burst(x,y,item){
- const stain={x,y,item,rotation:Math.random()*Math.PI*2,scale:.8+Math.random()*.55};
+ if(item===items.sponge){
+  const before=splats.length;
+  splats=splats.filter(stain=>Math.hypot(stain.x-x,stain.y-y)>105);
+  const cleaned=before-splats.length;
+  for(let i=0;i<16;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*2.8;particles.push({x:x+Math.cos(a)*24,y:y+Math.sin(a)*24,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:18+Math.random()*16,max:34,color:"#d9e5f2",size:2+Math.random()*3})}
+  $("message").innerHTML=cleaned?("<strong>ГУБКА!</strong> Убрано следов: "+cleaned+"."):"<strong>ГУБКА!</strong> Здесь и так чисто.";
+  return;
+ }
+ const stain={x,y,item,rotation:Math.random()*Math.PI*2,scale:.8+Math.random()*.55,seed:Math.random()*1000};
  splats.push(stain);if(splats.length>45)splats.shift();
  for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3.4;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:25+Math.random()*20,max:45,color:item.color,size:2+Math.random()*4})}
  count++;$("count").textContent=count;$("message").innerHTML="<strong>ШЛЁП.</strong> Попадание зафиксировано.";
@@ -160,7 +168,23 @@ function target(){
  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,C.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
  ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,C.r-10,0,Math.PI*2);ctx.stroke();
  ctx.save();ctx.beginPath();ctx.arc(0,0,C.r-5,0,Math.PI*2);ctx.clip();
- splats.forEach(s=>{ctx.save();ctx.translate(s.x-C.x,s.y-C.y);ctx.rotate(s.rotation);ctx.globalAlpha=.83;ctx.font="54px Apple Color Emoji,Segoe UI Emoji,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(s.item.emoji,0,0);ctx.restore()});
+ splats.forEach(s=>{
+  ctx.save();ctx.translate(s.x-C.x,s.y-C.y);ctx.rotate(s.rotation);ctx.scale(s.scale,s.scale);ctx.globalAlpha=.88;
+  const color=s.item.color;
+  ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=5;
+  ctx.beginPath();
+  const lobes=13;
+  for(let i=0;i<lobes;i++){
+   const a=i/lobes*Math.PI*2;
+   const radius=19+Math.sin(i*12.989+s.seed)*8+(i%3===0?7:0);
+   const px=Math.cos(a)*radius,py=Math.sin(a)*radius;
+   if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  ctx.beginPath();ctx.ellipse(-19,15,5,11,.25,0,Math.PI*2);ctx.ellipse(17,-13,4,8,-.4,0,Math.PI*2);ctx.ellipse(3,26,3,7,.1,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.25;ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(-7,-8,7,3,-.5,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ });
  ctx.restore();
  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="950 76px Inter,system-ui,sans-serif";
  let size=76;while(ctx.measureText(word).width>C.r*1.55&&size>17){size-=2;ctx.font="950 "+size+"px Inter,system-ui,sans-serif"}
