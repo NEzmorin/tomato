@@ -1,639 +1,182 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f3ed">
-  <meta name="description" content="Весёлая аркадная игра: выбирай снаряды и попадай в синюю мишень со своим именем или словом.">
-  <title>ТОМАТ — выбери свою цель!</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --paper: #f5f3ed;
-      --ink: #18212c;
-      --muted: #77808c;
-      --red: #f04d3e;
-      --blue: #2676ef;
-      --line: #e5e2d9;
-      --card: #fffefa;
-      --shadow: 0 18px 50px rgba(28, 38, 51, .08);
-    }
-
-    * { box-sizing: border-box; }
-    html { min-width: 320px; background: var(--paper); }
-    body {
-      margin: 0;
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 92% 4%, rgba(255, 217, 150, .24), transparent 24rem),
-        var(--paper);
-    }
-    button { font: inherit; }
-
-    .page { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 24px 0 44px; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 52px; }
-    .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 900; letter-spacing: -.06em; font-size: 19px; }
-    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; background: #ffddd6; font-size: 22px; }
-    .top-note { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
-    .hero { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 24px; }
-    .eyebrow { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; color: var(--red); font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
-    .eyebrow::before { content: ""; width: 22px; height: 2px; border-radius: 2px; background: currentColor; }
-    h1 { margin: 0; font-size: clamp(38px, 6.4vw, 70px); line-height: .94; letter-spacing: -.075em; font-weight: 950; }
-    h1 span { color: var(--red); }
-    .hero-copy { max-width: 270px; margin: 0 0 5px; color: var(--muted); font-size: 14px; line-height: 1.65; }
-    .game-card { overflow: hidden; border: 1px solid rgba(255,255,255,.9); border-radius: 26px; background: var(--card); box-shadow: var(--shadow); }
-    .game-head { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 17px 22px; border-bottom: 1px solid var(--line); }
-    .stage-label { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 900; letter-spacing: .15em; }
-    .stage-dot { width: 8px; height: 8px; border-radius: 50%; background: #42c98b; box-shadow: 0 0 0 4px #e4f8ed; }
-    .game-state { color: var(--muted); font-size: 12px; text-align: right; }
-    .target-editor { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 22px; border-bottom: 1px solid var(--line); background: #fffefa; }
-    .target-editor label { display: block; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
-    .target-editor small { display: block; margin-top: 4px; color: #9aa1a8; font-size: 10px; }
-    .target-edit-fields { display: flex; align-items: center; gap: 8px; width: min(460px, 58%); }
-    .target-edit-fields input { min-width: 0; flex: 1; height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: 11px; background: #f8f8f5; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; outline: none; }
-    .target-edit-fields input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(38,118,239,.12); }
-    .apply-target { min-height: 42px; padding: 0 15px; border: 0; border-radius: 11px; background: var(--blue); color: white; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform .16s ease, background .16s ease; }
-    .apply-target:hover { transform: translateY(-1px); background: #1766da; }
-    .apply-target:focus-visible { outline: 3px solid rgba(38,118,239,.3); outline-offset: 2px; }
-    .arena-wrap { position: relative; padding: 12px; background: #e9f1f5; }
-    canvas { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; border-radius: 17px; touch-action: none; cursor: crosshair; outline: none; }
-    canvas:focus-visible { box-shadow: 0 0 0 4px rgba(38,118,239,.25); }
-    .arena-hint { position: absolute; left: 28px; bottom: 24px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid rgba(255,255,255,.72); border-radius: 999px; background: rgba(255,255,255,.78); color: #3b5362; font-size: 11px; font-weight: 800; backdrop-filter: blur(8px); pointer-events: none; }
-    .arena-hint b { color: var(--red); font-size: 15px; }
-    .below-game { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 18px 22px 20px; }
-    .status-title { margin: 0 0 4px; font-size: 13px; font-weight: 900; }
-    .status-copy { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
-    .stats { display: flex; align-items: center; gap: 22px; }
-    .stat { min-width: 54px; }
-    .stat-value { display: block; font-size: 23px; line-height: 1; font-weight: 950; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
-    .stat-label { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin: 34px 0 13px; }
-    .section-head h2 { margin: 0; font-size: 17px; font-weight: 950; letter-spacing: -.04em; }
-    .section-head p { margin: 0; color: var(--muted); font-size: 11px; }
-    .ammo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 11px; }
-    .ammo {
-      position: relative; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 13px 13px;
-      border: 1px solid var(--line); border-radius: 16px; background: rgba(255,254,250,.8); color: var(--ink);
-      text-align: left; cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
-    }
-    .ammo:hover { transform: translateY(-2px); border-color: #c9d7e7; }
-    .ammo[aria-pressed="true"] { border-color: var(--blue); background: #f0f6ff; box-shadow: 0 0 0 2px rgba(38,118,239,.1); }
-    .ammo-emoji { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 12px; background: #f3f0e8; font-size: 23px; }
-    .ammo[aria-pressed="true"] .ammo-emoji { background: #dceaff; }
-    .ammo-name { display: block; font-size: 12px; font-weight: 900; }
-    .ammo-power { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
-    .ammo-check { position: absolute; top: 8px; right: 9px; color: var(--blue); font-size: 11px; font-weight: 900; opacity: 0; }
-    .ammo[aria-pressed="true"] .ammo-check { opacity: 1; }
-    .footer-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 20px; color: var(--muted); font-size: 11px; }
-    .tip { display: flex; gap: 8px; align-items: center; }
-    .tip-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: #fff; color: var(--red); font-weight: 900; }
-    .reset {
-      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--line);
-      border-radius: 999px; background: transparent; color: var(--ink); font-size: 11px; font-weight: 900; cursor: pointer;
-      transition: background .16s ease, transform .16s ease;
-    }
-    .reset:hover { background: #fff; transform: translateY(-1px); }
-    .reset:focus-visible, .ammo:focus-visible { outline: 3px solid rgba(38,118,239,.3); outline-offset: 2px; }
-    .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 42px; padding-top: 17px; border-top: 1px solid var(--line); color: #9a9fa4; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-
-    @media (max-width: 760px) {
-      .page { width: min(100% - 24px, 600px); padding-top: 16px; }
-      .topbar { margin-bottom: 35px; }
-      .hero { display: block; margin-bottom: 18px; }
-      .hero-copy { max-width: 360px; margin-top: 13px; }
-      .game-head { padding: 14px 15px; }
-      .target-editor { align-items: stretch; flex-direction: column; gap: 9px; padding: 14px 15px; }
-      .target-edit-fields { width: 100%; }
-      .arena-wrap { padding: 7px; }
-      .arena-hint { left: 15px; bottom: 15px; padding: 7px 9px; font-size: 9px; }
-      .below-game { padding: 15px; }
-      .stats { gap: 13px; }
-      .stat-value { font-size: 20px; }
-      .ammo-grid { grid-template-columns: repeat(2, 1fr); }
-      .ammo:last-child { grid-column: span 2; }
-      .section-head { align-items: start; flex-direction: column; gap: 5px; margin-top: 27px; }
-    }
-    @media (max-width: 390px) {
-      .below-game { grid-template-columns: 1fr; }
-      .stats { justify-content: space-between; }
-      .top-note { font-size: 9px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
+<meta name="description" content="Выбери слово, выбери снаряд и отправь его точно в цель.">
+<title>ТОМАТ — сайт для метких</title>
+<style>
+:root{color-scheme:dark;--bg:#090b12;--panel:#111520;--panel2:#171d2a;--line:#252d3d;--muted:#8993a6;--blue:#347eff;--red:#ff5d59;--white:#f4f6fb}
+*{box-sizing:border-box}
+html,body{margin:0;min-width:320px;min-height:100%;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body{min-height:100svh;background:radial-gradient(ellipse at 50% 38%,rgba(36,80,150,.16),transparent 48%),var(--bg)}
+button,input{font:inherit}
+.app{width:min(900px,100% - 32px);margin:0 auto;padding:22px 0 max(24px,env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:950;letter-spacing:.12em}
+.logo{display:grid;place-items:center;width:36px;height:36px;border:1px solid #392b35;border-radius:12px;background:#21151d;font-size:20px}
+.tag{color:#778197;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:15px}
+h1{margin:0;font-size:clamp(25px,5vw,38px);line-height:1;letter-spacing:-.06em;font-weight:950}
+h1 span{color:var(--red)}
+.subtitle{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.live{display:flex;align-items:center;gap:7px;color:#aab3c3;font-size:10px;font-weight:800;letter-spacing:.12em;white-space:nowrap}
+.live i{width:7px;height:7px;border-radius:50%;background:#4bd49a;box-shadow:0 0 12px #4bd49a}
+.stage{position:relative;overflow:hidden;border:1px solid #222b3a;border-radius:24px;background:#0d1422;box-shadow:0 22px 70px rgba(0,0,0,.28)}
+canvas{display:block;width:100%;height:clamp(390px,58svh,610px);touch-action:manipulation;cursor:crosshair}
+.stage-tip{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);padding:9px 13px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(8,12,20,.76);color:#aeb9cd;font-size:10px;font-weight:750;white-space:nowrap;pointer-events:none;backdrop-filter:blur(10px)}
+.stage-tip b{color:#fff}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-top:13px}
+.panel{min-width:0;padding:15px;border:1px solid var(--line);border-radius:17px;background:var(--panel)}
+.label{display:block;margin-bottom:9px;color:#a5aec0;font-size:9px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}
+.name-row{display:flex;gap:8px}
+input{width:100%;min-width:0;height:42px;padding:0 12px;border:1px solid #30394a;border-radius:11px;outline:none;background:#0b101a;color:#fff;font-size:14px;font-weight:750}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #347eff25}
+.apply,.clear{height:42px;padding:0 14px;border:0;border-radius:11px;background:var(--blue);color:#fff;font-size:11px;font-weight:900;white-space:nowrap;cursor:pointer}
+.clear{background:#202838;border:1px solid #30394a;color:#c5ccda}
+.apply:active,.clear:active,.weapon:active{transform:scale(.97)}
+.weapon-panel{margin-top:13px}
+.weapon-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.weapon{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:8px 10px;border:1px solid #2a3344;border-radius:13px;background:#101622;color:#e7ebf3;cursor:pointer;transition:.15s}
+.weapon[aria-pressed=true]{border-color:#4c8cff;background:#152442;box-shadow:inset 0 0 0 1px #347eff33}
+.weapon .emoji{font-size:22px}
+.weapon .wname{font-size:11px;font-weight:850}
+.status{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:0 3px;color:#8d98aa;font-size:11px}
+.status strong{color:#e6eaf2;font-weight:800}
+@media(max-width:600px){
+ .app{width:calc(100% - 22px);padding-top:max(13px,env(safe-area-inset-top))}
+ header{margin-bottom:17px}.tag{font-size:8px}
+ .intro{margin-bottom:12px}.subtitle{max-width:250px;font-size:11px}
+ .stage{border-radius:19px}
+ canvas{height:clamp(390px,56svh,560px)}
+ .stage-tip{bottom:10px;font-size:9px}
+ .controls{grid-template-columns:1fr;gap:9px;margin-top:9px}
+ .panel{padding:12px;border-radius:15px}
+ .weapon-panel{margin-top:9px}
+ .weapon-list{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+ .weapon{flex-direction:column;gap:3px;min-height:61px;padding:7px 2px}
+ .weapon .emoji{font-size:21px}.weapon .wname{font-size:9px}
+ .status{margin-top:10px;font-size:10px}
+}
+@media(max-width:360px){.weapon .wname{font-size:8px}.apply{padding:0 10px;font-size:10px}}
+</style>
 </head>
 <body>
-  <main class="page">
-    <header class="topbar">
-      <a class="brand" href="#" aria-label="Томат — на главную">
-        <span class="brand-mark" aria-hidden="true">🍅</span>
-        <span>ТОМАТ<span style="color:var(--red)">.</span></span>
-      </a>
-      <div class="top-note">Маленькая аркада · Большая меткость</div>
-    </header>
-
-    <section class="hero" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Полигон открыт</p>
-        <h1 id="page-title">ПРИЦЕЛЬСЯ.<br>ПОПАДИ В <span id="targetHeadline">«С».</span></h1>
-      </div>
-      <p class="hero-copy">Выбирай самый убедительный снаряд, натягивай рогатку и отправляй его точно в синюю мишень.</p>
-    </section>
-
-    <section class="game-card" aria-label="Игровое поле">
-      <div class="game-head">
-        <div class="stage-label"><span class="stage-dot"></span> ПОЛИГОН № 01</div>
-        <div class="game-state" id="gameState" aria-live="polite">Мишень готова к атаке</div>
-      </div>
-      <div class="target-editor">\n        <div><label for="targetInput">СЛОВО ИЛИ ИМЯ ДЛЯ МИШЕНИ</label><small>Напиши, что должно появиться в синем круге</small></div>\n        <div class="target-edit-fields"><input id="targetInput" type="text" maxlength="18" value="С" placeholder="Например, МАКС" aria-label="Слово или имя на мишени"><button class="apply-target" id="applyTarget" type="button">Изменить мишень</button></div>\n      </div>\n      <div class="arena-wrap">
-        <canvas id="game" width="960" height="480" tabindex="0" aria-label="Игровое поле. Зажми снаряд у рогатки, потяни назад и отпусти, чтобы попасть в синюю мишень с надписью С."></canvas>
-        <div class="arena-hint"><b>↖</b> ЗАЖМИ · ПОТЯНИ НАЗАД · ОТПУСТИ</div>
-      </div>
-      <div class="below-game">
-        <div>
-          <p class="status-title" id="statusTitle">Готов к первому броску?</p>
-          <p class="status-copy" id="statusCopy">Выбери снаряд ниже и потяни его назад от рогатки.</p>
-        </div>
-        <div class="stats" aria-label="Статистика игры">
-          <div class="stat"><span class="stat-value" id="score">0</span><span class="stat-label">Очки</span></div>
-          <div class="stat"><span class="stat-value" id="hits">0</span><span class="stat-label">Попадания</span></div>
-          <div class="stat"><span class="stat-value" id="throws">0</span><span class="stat-label">Броски</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section aria-labelledby="ammo-title">
-      <div class="section-head">
-        <h2 id="ammo-title">ТВОЙ АРСЕНАЛ</h2>
-        <p>У каждого снаряда свой характер. Выбирай с умом.</p>
-      </div>
-      <div class="ammo-grid" id="ammoGrid">
-        <button class="ammo" type="button" data-ammo="tomato" aria-pressed="true">
-          <span class="ammo-emoji">🍅</span><span><span class="ammo-name">Помидор</span><span class="ammo-power">Классика · 10 очков</span></span><span class="ammo-check">✓</span>
-        </button>
-        <button class="ammo" type="button" data-ammo="egg" aria-pressed="false">
-          <span class="ammo-emoji">🥚</span><span><span class="ammo-name">Яйцо</span><span class="ammo-power">Хрупкий снайпер · 15</span></span><span class="ammo-check">✓</span>
-        </button>
-        <button class="ammo" type="button" data-ammo="orange" aria-pressed="false">
-          <span class="ammo-emoji">🍊</span><span><span class="ammo-name">Апельсин</span><span class="ammo-power">Тяжёлая артиллерия · 20</span></span><span class="ammo-check">✓</span>
-        </button>
-        <button class="ammo" type="button" data-ammo="water" aria-pressed="false">
-          <span class="ammo-emoji">💧</span><span><span class="ammo-name">Водяной шар</span><span class="ammo-power">Сюрприз · 25</span></span><span class="ammo-check">✓</span>
-        </button>
-        <button class="ammo" type="button" data-ammo="sponge" aria-pressed="false">
-          <span class="ammo-emoji">🧽</span><span><span class="ammo-name">Губка</span><span class="ammo-power">Мягкий, но меткий · 30</span></span><span class="ammo-check">✓</span>
-        </button>
-      </div>
-    </section>
-
-    <div class="footer-row">
-      <div class="tip"><span class="tip-icon">i</span><span>Чем сильнее натяжение, тем дальше летит снаряд.</span></div>
-      <button class="reset" id="reset" type="button"><span aria-hidden="true">↻</span> Начать заново</button>
-    </div>
-
-    <footer class="footer"><span>ТОМАТ. · 2026</span><span>Тренируй меткость, не серьёзность.</span></footer>
-  </main>
-
-  <script>
-    (() => {
-      "use strict";
-
-      const canvas = document.getElementById("game");
-      const ctx = canvas.getContext("2d");
-      const W = 960, H = 480;
-      const LAUNCH = { x: 142, y: 354 };
-      const TARGET = { x: 778, y: 242, r: 86 };
-      const GROUND = 416;
-      const ammo = {
-        tomato: { emoji: "🍅", name: "Помидор", points: 10, gravity: 0.21, radius: 16, color: "#ed5145" },
-        egg: { emoji: "🥚", name: "Яйцо", points: 15, gravity: 0.19, radius: 14, color: "#f8e9c9" },
-        orange: { emoji: "🍊", name: "Апельсин", points: 20, gravity: 0.23, radius: 17, color: "#ffa12f" },
-        water: { emoji: "💧", name: "Водяной шар", points: 25, gravity: 0.17, radius: 16, color: "#5bc9f5" },
-        sponge: { emoji: "🧽", name: "Губка", points: 30, gravity: 0.2, radius: 16, color: "#f3d84e" }
-      };
-
-      let selected = "tomato";
-      let targetText = "С";
-      let aiming = false;
-      let aimPoint = { x: LAUNCH.x - 90, y: LAUNCH.y - 32 };
-      let pointerId = null;
-      let projectile = null;
-      let particles = [];
-      let splats = [];
-      let score = 0, hits = 0, throws = 0, combo = 0;
-      let targetPulse = 0;
-      let lastTime = 0;
-
-      const $ = (id) => document.getElementById(id);
-      const gameState = $("gameState");
-      const statusTitle = $("statusTitle");
-      const statusCopy = $("statusCopy");
-      const targetInput = $("targetInput");
-      const targetHeadline = $("targetHeadline");
-
-      function setMessage(title, copy, state) {
-        statusTitle.textContent = title;
-        statusCopy.textContent = copy;
-        if (state) gameState.textContent = state;
-      }
-
-      function applyTarget() {
-        const value = targetInput.value.trim().replace(/\s+/g, " ");
-        if (!value) {
-          targetInput.setCustomValidity("Введи слово или имя для мишени.");
-          targetInput.reportValidity();
-          targetInput.addEventListener("input", () => targetInput.setCustomValidity(""), { once: true });
-          return;
-        }
-        targetText = Array.from(value).slice(0, 18).join("");
-        targetInput.value = targetText;
-        targetHeadline.textContent = "«" + targetText + "».";
-        canvas.setAttribute("aria-label", "Игровое поле. Зажми снаряд у рогатки, потяни назад и отпусти, чтобы попасть в синюю мишень с надписью " + targetText + ".");
-        setMessage("Новая мишень: " + targetText, "Теперь попробуй попасть прямо в своё слово или имя!", "Цель изменена");
-        draw();
-      }
-
-      $("applyTarget").addEventListener("click", applyTarget);
-      targetInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") applyTarget();
-      });
-
-      function updateStats() {
-        $("score").textContent = score;
-        $("hits").textContent = hits;
-        $("throws").textContent = throws;
-      }
-
-      function selectAmmo(id) {
-        if (!ammo[id]) return;
-        selected = id;
-        document.querySelectorAll(".ammo").forEach((button) => {
-          button.setAttribute("aria-pressed", String(button.dataset.ammo === id));
-        });
-        const item = ammo[id];
-        setMessage(item.name + " заряжен!", "Потяни снаряд назад от рогатки и отпусти.", "Выбран снаряд: " + item.name);
-      }
-
-      document.querySelectorAll(".ammo").forEach((button) => {
-        button.addEventListener("click", () => selectAmmo(button.dataset.ammo));
-      });
-
-      function resizeCanvas() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.round(W * dpr);
-        canvas.height = Math.round(H * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        draw();
-      }
-      window.addEventListener("resize", resizeCanvas);
-
-      function pointerPosition(event) {
-        const rect = canvas.getBoundingClientRect();
-        return {
-          x: (event.clientX - rect.left) * W / rect.width,
-          y: (event.clientY - rect.top) * H / rect.height
-        };
-      }
-
-      function clampAim(point) {
-        let dx = point.x - LAUNCH.x;
-        let dy = point.y - LAUNCH.y;
-        const length = Math.hypot(dx, dy) || 1;
-        const max = 145;
-        if (length > max) {
-          dx = dx / length * max;
-          dy = dy / length * max;
-        }
-        return { x: LAUNCH.x + dx, y: LAUNCH.y + dy };
-      }
-
-      canvas.addEventListener("pointerdown", (event) => {
-        if (projectile) return;
-        const point = pointerPosition(event);
-        if (Math.hypot(point.x - LAUNCH.x, point.y - LAUNCH.y) > 56) return;
-        aiming = true;
-        pointerId = event.pointerId;
-        aimPoint = point;
-        canvas.setPointerCapture(pointerId);
-        event.preventDefault();
-        draw();
-      });
-
-      canvas.addEventListener("pointermove", (event) => {
-        if (!aiming || event.pointerId !== pointerId) return;
-        aimPoint = clampAim(pointerPosition(event));
-        draw();
-      });
-
-      function releaseShot(event) {
-        if (!aiming || (event && event.pointerId !== pointerId)) return;
-        aiming = false;
-        pointerId = null;
-        const dx = LAUNCH.x - aimPoint.x;
-        const dy = LAUNCH.y - aimPoint.y;
-        const pull = Math.hypot(dx, dy);
-        if (pull < 12) {
-          setMessage("Натяни посильнее!", "Зажми снаряд у рогатки и оттяни его назад.", "Ждём бросок");
-          draw();
-          return;
-        }
-        const item = ammo[selected];
-        projectile = {
-          x: LAUNCH.x, y: LAUNCH.y,
-          vx: dx * 0.17, vy: dy * 0.17,
-          radius: item.radius, gravity: item.gravity,
-          emoji: item.emoji, color: item.color, name: item.name, points: item.points,
-          rotation: 0, active: true
-        };
-        throws++;
-        updateStats();
-        setMessage("Полетели!", "Снаряд уже в воздухе. Следи за мишенью!", "Бросок № " + throws);
-        draw();
-      }
-      canvas.addEventListener("pointerup", releaseShot);
-      canvas.addEventListener("pointercancel", releaseShot);
-
-      $("reset").addEventListener("click", () => {
-        score = 0; hits = 0; throws = 0; combo = 0;
-        projectile = null; particles = []; splats = []; aiming = false;
-        aimPoint = { x: LAUNCH.x - 90, y: LAUNCH.y - 32 };
-        targetPulse = 0;
-        updateStats();
-        setMessage("Готов к первому броску?", "Выбери снаряд ниже и потяни его назад от рогатки.", "Мишень готова к атаке");
-        draw();
-      });
-
-      function makeBurst(x, y, color) {
-        for (let i = 0; i < 22; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 1.5 + Math.random() * 5;
-          particles.push({
-            x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-            life: 34 + Math.random() * 18, maxLife: 52,
-            size: 3 + Math.random() * 5, color
-          });
-        }
-      }
-
-      function hitTarget() {
-        if (!projectile) return;
-        const p = projectile;
-        const item = ammo[selected];
-        const localX = (p.x - TARGET.x) / TARGET.r;
-        const localY = (p.y - TARGET.y) / TARGET.r;
-        splats.push({ x: localX, y: localY, color: p.color, emoji: p.emoji, size: 15 + Math.random() * 12 });
-        if (splats.length > 18) splats.shift();
-        makeBurst(p.x, p.y, p.color);
-        projectile = null;
-        hits++;
-        combo++;
-        score += p.points + Math.min(combo - 1, 5) * 5;
-        targetPulse = 1;
-        updateStats();
-        const bonus = combo > 1 ? " Серия x" + combo + " — бонусные очки!" : "";
-        setMessage("ЕСТЬ ПОПАДАНИЕ! +" + (p.points + Math.min(combo - 1, 5) * 5) + " очков", p.name + " угодил точно в цель." + bonus, "Мишень получила меткий удар");
-      }
-
-      function missShot() {
-        projectile = null;
-        combo = 0;
-        setMessage("Чуть-чуть мимо!", "Попробуй изменить угол или силу натяжения.", "Попробуй ещё раз");
-      }
-
-      function update(dt) {
-        const step = Math.min(dt / 16.67, 2.2);
-        if (projectile) {
-          const p = projectile;
-          p.x += p.vx * step;
-          p.y += p.vy * step;
-          p.vy += p.gravity * step;
-          p.vx *= Math.pow(.999, step);
-          p.rotation += p.vx * .012 * step;
-
-          const distance = Math.hypot(p.x - TARGET.x, p.y - TARGET.y);
-          if (distance < TARGET.r + p.radius * .5) {
-            hitTarget();
-          } else if (p.y > GROUND - p.radius || p.x > W + 40 || p.x < -40 || p.y < -80) {
-            missShot();
-          }
-        }
-
-        particles = particles.filter((particle) => particle.life > 0);
-        particles.forEach((p) => {
-          p.x += p.vx * step; p.y += p.vy * step;
-          p.vy += .12 * step; p.vx *= .985; p.life -= step;
-        });
-        targetPulse = Math.max(0, targetPulse - .045 * step);
-      }
-
-      function roundedRect(x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.roundRect(x, y, w, h, r);
-      }
-
-      function drawBackground() {
-        const sky = ctx.createLinearGradient(0, 0, 0, H);
-        sky.addColorStop(0, "#d9eff8");
-        sky.addColorStop(.72, "#f1f5e9");
-        sky.addColorStop(1, "#d8e8da");
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.save();
-        ctx.globalAlpha = .22;
-        ctx.strokeStyle = "#8fb1bd";
-        ctx.lineWidth = 1;
-        for (let x = 24; x < W; x += 48) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GROUND); ctx.stroke();
-        }
-        for (let y = 24; y < GROUND; y += 48) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-        }
-        ctx.restore();
-
-        ctx.fillStyle = "rgba(255,255,255,.5)";
-        ctx.beginPath(); ctx.ellipse(300, 110, 72, 19, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(340, 103, 42, 25, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(870, 128, 58, 16, 0, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = "#c5dfd0";
-        ctx.beginPath(); ctx.moveTo(0, 365); ctx.quadraticCurveTo(175, 305, 330, 370); ctx.quadraticCurveTo(500, 300, 680, 365); ctx.quadraticCurveTo(825, 320, 960, 360); ctx.lineTo(960, GROUND); ctx.lineTo(0, GROUND); ctx.fill();
-        ctx.fillStyle = "#b3d2bd";
-        ctx.fillRect(0, GROUND, W, H - GROUND);
-        ctx.fillStyle = "rgba(77,125,103,.15)";
-        for (let x = 0; x < W; x += 28) {
-          ctx.fillRect(x, GROUND + 10 + (x % 3) * 3, 13, 2);
-        }
-        ctx.fillStyle = "rgba(65,100,78,.15)";
-        ctx.fillRect(0, GROUND, W, 3);
-      }
-
-      function drawTarget(time) {
-        const pulse = targetPulse * 12 + Math.sin(time / 650) * 2;
-        ctx.save();
-        ctx.translate(TARGET.x, TARGET.y);
-
-        ctx.fillStyle = "rgba(27,86,145,.12)";
-        ctx.beginPath(); ctx.ellipse(0, TARGET.r + 100, 112, 15, 0, 0, Math.PI * 2); ctx.fill();
-
-        ctx.strokeStyle = "rgba(38,118,239,.18)";
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(0, 0, TARGET.r + 22 + pulse, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = "rgba(38,118,239,.25)";
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, 0, TARGET.r + 10 + pulse * .4, 0, Math.PI * 2); ctx.stroke();
-
-        const grad = ctx.createRadialGradient(-27, -34, 12, 0, 0, TARGET.r + 7);
-        grad.addColorStop(0, "#5aa5ff");
-        grad.addColorStop(.7, "#2e80f2");
-        grad.addColorStop(1, "#1f65d0");
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(0, 0, TARGET.r, 0, Math.PI * 2); ctx.fill();
-
-        ctx.save();
-        ctx.beginPath(); ctx.arc(0, 0, TARGET.r - 8, 0, Math.PI * 2); ctx.clip();
-        ctx.strokeStyle = "rgba(255,255,255,.22)";
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, 0, 58, 0, Math.PI * 2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(0, 0, 31, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,.12)";
-        ctx.beginPath(); ctx.arc(-31, -38, 34, 0, Math.PI * 2); ctx.fill();
-
-        splats.forEach((s) => {
-          const sx = s.x * TARGET.r, sy = s.y * TARGET.r;
-          ctx.globalAlpha = .88;
-          ctx.font = (s.size * 1.7) + "px Apple Color Emoji, Segoe UI Emoji, sans-serif";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(s.emoji, sx, sy);
-        });
-        ctx.restore();
-
-        ctx.fillStyle = "#fff";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        let fontSize = 86;
-        const maxTextWidth = TARGET.r * 1.55;
-        ctx.font = "950 " + fontSize + "px Inter, system-ui, sans-serif";
-        while (ctx.measureText(targetText).width > maxTextWidth && fontSize > 18) {
-          fontSize -= 2;
-          ctx.font = "950 " + fontSize + "px Inter, system-ui, sans-serif";
-        }
-        ctx.shadowColor = "rgba(12,52,117,.15)";
-        ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-        ctx.fillText(targetText, 0, 4, maxTextWidth);
-        ctx.restore();
-
-        ctx.fillStyle = "#235a9f";
-        ctx.font = "900 11px Inter, system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("ЦЕЛЬ", TARGET.x, TARGET.y + TARGET.r + 34);
-      }
-
-      function drawLauncher() {
-        ctx.save();
-        ctx.fillStyle = "rgba(54,76,61,.16)";
-        ctx.beginPath(); ctx.ellipse(LAUNCH.x + 5, GROUND + 2, 67, 10, 0, 0, Math.PI * 2); ctx.fill();
-
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = "#91603e";
-        ctx.lineWidth = 16;
-        ctx.beginPath(); ctx.moveTo(105, 413); ctx.quadraticCurveTo(109, 382, LAUNCH.x, 350); ctx.quadraticCurveTo(153, 382, 177, 413); ctx.stroke();
-        ctx.strokeStyle = "#c58b5c";
-        ctx.lineWidth = 6;
-        ctx.beginPath(); ctx.moveTo(106, 411); ctx.quadraticCurveTo(111, 381, LAUNCH.x, 353); ctx.quadraticCurveTo(153, 382, 176, 411); ctx.stroke();
-
-        const bandPoint = aiming ? aimPoint : LAUNCH;
-        ctx.strokeStyle = "#6d7780";
-        ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(107, 385); ctx.lineTo(bandPoint.x, bandPoint.y); ctx.lineTo(173, 385); ctx.stroke();
-        ctx.strokeStyle = "rgba(255,255,255,.55)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(107, 383); ctx.lineTo(bandPoint.x, bandPoint.y - 2); ctx.lineTo(173, 383); ctx.stroke();
-
-        if (!projectile || aiming) {
-          const item = ammo[selected];
-          ctx.save();
-          ctx.font = "31px Apple Color Emoji, Segoe UI Emoji, sans-serif";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(28,40,54,.2)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-          ctx.fillText(item.emoji, bandPoint.x, bandPoint.y);
-          ctx.restore();
-        }
-        ctx.restore();
-      }
-
-      function drawAim() {
-        if (!aiming) return;
-        const dx = LAUNCH.x - aimPoint.x, dy = LAUNCH.y - aimPoint.y;
-        const vx = dx * .17, vy = dy * .17;
-        ctx.save();
-        ctx.setLineDash([4, 10]);
-        ctx.strokeStyle = "rgba(36,104,195,.52)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(LAUNCH.x, LAUNCH.y);
-        for (let i = 1; i < 29; i++) {
-          const t = i * 2.5;
-          const x = LAUNCH.x + vx * t;
-          const y = LAUNCH.y - vy * t + .5 * ammo[selected].gravity * t * t;
-          if (x > W || y > GROUND) break;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "rgba(38,118,239,.85)";
-        ctx.beginPath(); ctx.arc(aimPoint.x, aimPoint.y, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-      }
-
-      function drawProjectile() {
-        if (!projectile) return;
-        const p = projectile;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-        ctx.font = "34px Apple Color Emoji, Segoe UI Emoji, sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.shadowColor = "rgba(25,42,55,.25)";
-        ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-        ctx.fillText(p.emoji, 0, 0);
-        ctx.restore();
-      }
-
-      function drawParticles() {
-        particles.forEach((p) => {
-          ctx.save();
-          ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-          ctx.fillStyle = p.color;
-          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
-          ctx.restore();
-        });
-      }
-
-      function draw(time = 0) {
-        ctx.clearRect(0, 0, W, H);
-        drawBackground();
-        drawTarget(time);
-        drawAim();
-        drawLauncher();
-        drawProjectile();
-        drawParticles();
-      }
-
-      function frame(time) {
-        const dt = lastTime ? time - lastTime : 16.67;
-        lastTime = time;
-        update(dt);
-        draw(time);
-        requestAnimationFrame(frame);
-      }
-
-      resizeCanvas();
-      requestAnimationFrame(frame);
-    })();
-  </script>
+<main class="app">
+<header><div class="brand"><span class="logo">🍅</span><span>ТОМАТ / <span style="color:var(--red)">НЕ ПРИНИМАЙ ВСЕРЬЁЗ</span></span></div><div class="tag">серьёзность отменяется</div></header>
+<section class="intro"><div><h1>ТВОЯ ЦЕЛЬ — <span id="headline">«С»</span></h1><p class="subtitle">Выбери предмет и ткни в любое место. Остальное — физика (почти).</p></div><div class="live"><i></i> ВСЁ ГОТОВО</div></section>
+<section class="stage" aria-label="Поле для бросков">
+<canvas id="field" aria-label="Нажми или коснись экрана, чтобы бросить выбранный предмет в это место"></canvas>
+<div class="stage-tip"><b>ТЫКНИ</b> В ТОЧКУ — СНАРЯД ТУДА И ПОЛЕТИТ</div>
+</section>
+<section class="controls">
+<div class="panel">
+<label class="label" for="word">КТО СЕГОДНЯ МИШЕНЬ?</label>
+<div class="name-row"><input id="word" maxlength="18" value="С" placeholder="Имя или любое слово"><button class="apply" id="setWord">Поставить</button></div>
+</div>
+<div class="panel" style="min-width:120px">
+<label class="label">ПОПАДАНИЯ</label>
+<div style="font-size:25px;font-weight:950;letter-spacing:-.06em" id="count">0</div>
+</div>
+</section>
+<section class="panel weapon-panel">
+<label class="label">ВЫБЕРИ, ЧЕМ ЗАПУСТИТЬ</label>
+<div class="weapon-list">
+<button class="weapon" data-item="tomato" aria-pressed="true"><span class="emoji">🍅</span><span class="wname">Помидор</span></button>
+<button class="weapon" data-item="egg" aria-pressed="false"><span class="emoji">🥚</span><span class="wname">Яйцо</span></button>
+<button class="weapon" data-item="orange" aria-pressed="false"><span class="emoji">🍊</span><span class="wname">Апельсин</span></button>
+<button class="weapon" data-item="water" aria-pressed="false"><span class="emoji">💧</span><span class="wname">Шар</span></button>
+<button class="weapon" data-item="sponge" aria-pressed="false"><span class="emoji">🧽</span><span class="wname">Губка</span></button>
+</div>
+</section>
+<div class="status"><span id="message"><strong>Готово.</strong> Выбирай точку назначения.</span><button class="clear" id="clear">Очистить следы</button></div>
+</main>
+<script>
+(()=>{
+"use strict";
+const canvas=document.getElementById("field"),ctx=canvas.getContext("2d");
+const items={tomato:{emoji:"🍅",color:"#e94b45"},egg:{emoji:"🥚",color:"#f3dfb5"},orange:{emoji:"🍊",color:"#ff982e"},water:{emoji:"💧",color:"#57cafa"},sponge:{emoji:"🧽",color:"#f1d447"}};
+let selected="tomato",word="С",shots=[],splats=[],particles=[],count=0,last=0;
+const W=800,H=600,C={x:400,y:278,r:112},origin={x:400,y:575};
+const $=id=>document.getElementById(id);
+function resize(){
+ const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+ canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
+ ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);draw();
+}
+window.addEventListener("resize",resize);
+function setWord(){
+ const value=$("word").value.trim().replace(/\s+/g," ");
+ if(!value){$("word").focus();return}
+ word=Array.from(value).slice(0,18).join("");$("word").value=word;$("headline").textContent="«"+word+"»";draw();
+}
+$("setWord").addEventListener("click",setWord);
+$("word").addEventListener("keydown",e=>{if(e.key==="Enter")setWord()});
+document.querySelectorAll(".weapon").forEach(btn=>btn.addEventListener("click",()=>{
+ selected=btn.dataset.item;document.querySelectorAll(".weapon").forEach(b=>b.setAttribute("aria-pressed",String(b===btn)));
+}));
+function position(e){
+ const r=canvas.getBoundingClientRect();
+ return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};
+}
+canvas.addEventListener("pointerdown",e=>{
+ const p=position(e),item=items[selected],dx=p.x-origin.x,dy=p.y-origin.y;
+ const distance=Math.hypot(dx,dy);
+ const duration=Math.max(650,Math.min(1500,distance*1.55));
+ shots.push({x:origin.x,y:origin.y,sx:origin.x,sy:origin.y,tx:p.x,ty:p.y,t:0,duration,item,rotation:0});
+ $("message").innerHTML="<strong>Летит.</strong> Уже ничего не исправить.";
+ e.preventDefault();
+});
+function burst(x,y,item){
+ const stain={x,y,item,rotation:Math.random()*Math.PI*2,scale:.8+Math.random()*.55};
+ splats.push(stain);if(splats.length>45)splats.shift();
+ for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3.4;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:25+Math.random()*20,max:45,color:item.color,size:2+Math.random()*4})}
+ count++;$("count").textContent=count;$("message").innerHTML="<strong>ШЛЁП.</strong> Попадание зафиксировано.";
+}
+function update(dt){
+ const step=Math.min(dt/16.67,2.5);
+ shots=shots.filter(s=>{
+  s.t+=dt;
+  const raw=Math.min(1,s.t/s.duration),ease=1-Math.pow(1-raw,2.15);
+  s.x=s.sx+(s.tx-s.sx)*ease;s.y=s.sy+(s.ty-s.sy)*ease-Math.sin(raw*Math.PI)*Math.min(55,Math.hypot(s.tx-s.sx,s.ty-s.sy)*.09);
+  s.rotation+=.12*step;
+  if(raw>=1){burst(s.tx,s.ty,s.item);return false}return true;
+ });
+ particles=particles.filter(p=>p.life>0);
+ particles.forEach(p=>{p.x+=p.vx*step;p.y+=p.vy*step;p.vy+=.08*step;p.life-=step});
+}
+function background(){
+ ctx.fillStyle="#0d1422";ctx.fillRect(0,0,W,H);
+ const glow=ctx.createRadialGradient(C.x,C.y,10,C.x,C.y,380);glow.addColorStop(0,"rgba(38,104,210,.18)");glow.addColorStop(1,"rgba(38,104,210,0)");ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="rgba(129,155,194,.07)";ctx.lineWidth=1;
+ for(let x=24;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+ for(let y=24;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+}
+function target(){
+ ctx.save();ctx.translate(C.x,C.y);
+ ctx.shadowColor="#2878ff55";ctx.shadowBlur=45;
+ const g=ctx.createRadialGradient(-32,-38,12,0,0,C.r);g.addColorStop(0,"#64a5ff");g.addColorStop(.65,"#347eff");g.addColorStop(1,"#1551ba");
+ ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,C.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+ ctx.strokeStyle="rgba(255,255,255,.25)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,C.r-10,0,Math.PI*2);ctx.stroke();
+ ctx.save();ctx.beginPath();ctx.arc(0,0,C.r-5,0,Math.PI*2);ctx.clip();
+ splats.forEach(s=>{ctx.save();ctx.translate(s.x-C.x,s.y-C.y);ctx.rotate(s.rotation);ctx.globalAlpha=.83;ctx.font="54px Apple Color Emoji,Segoe UI Emoji,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(s.item.emoji,0,0);ctx.restore()});
+ ctx.restore();
+ ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="950 76px Inter,system-ui,sans-serif";
+ let size=76;while(ctx.measureText(word).width>C.r*1.55&&size>17){size-=2;ctx.font="950 "+size+"px Inter,system-ui,sans-serif"}
+ ctx.shadowColor="#09285a88";ctx.shadowBlur=8;ctx.fillText(word,0,3,C.r*1.55);
+ ctx.restore();
+}
+function draw(){
+ background();target();
+ ctx.save();ctx.globalAlpha=.55;ctx.strokeStyle="#50617d";ctx.setLineDash([5,9]);ctx.beginPath();ctx.moveTo(origin.x,origin.y-15);ctx.lineTo(origin.x,origin.y-100);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+ shots.forEach(s=>{ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.rotation);ctx.font="38px Apple Color Emoji,Segoe UI Emoji,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.shadowColor="#0009";ctx.shadowBlur=12;ctx.fillText(s.item.emoji,0,0);ctx.restore()});
+ particles.forEach(p=>{ctx.save();ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.restore()});
+}
+function frame(t){const dt=last?t-last:16.67;last=t;update(dt);draw();requestAnimationFrame(frame)}
+resize();requestAnimationFrame(frame);
+$("clear").addEventListener("click",()=>{splats=[];particles=[];count=0;$("count").textContent="0";$("message").innerHTML="<strong>Чисто.</strong> Можно начинать заново.";draw()});
+})();
+</script>
 </body>
 </html>
