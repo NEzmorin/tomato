@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f3ed">
-  <meta name="description" content="Весёлая аркадная игра: выбирай снаряды и попадай в синюю мишень с буквой С.">
-  <title>ТОМАТ — попади в С!</title>
+  <meta name="description" content="Весёлая аркадная игра: выбирай снаряды и попадай в синюю мишень со своим именем или словом.">
+  <title>ТОМАТ — выбери свою цель!</title>
   <style>
     :root {
       color-scheme: light;
@@ -47,6 +47,15 @@
     .stage-label { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 900; letter-spacing: .15em; }
     .stage-dot { width: 8px; height: 8px; border-radius: 50%; background: #42c98b; box-shadow: 0 0 0 4px #e4f8ed; }
     .game-state { color: var(--muted); font-size: 12px; text-align: right; }
+    .target-editor { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 22px; border-bottom: 1px solid var(--line); background: #fffefa; }
+    .target-editor label { display: block; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+    .target-editor small { display: block; margin-top: 4px; color: #9aa1a8; font-size: 10px; }
+    .target-edit-fields { display: flex; align-items: center; gap: 8px; width: min(460px, 58%); }
+    .target-edit-fields input { min-width: 0; flex: 1; height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: 11px; background: #f8f8f5; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; outline: none; }
+    .target-edit-fields input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(38,118,239,.12); }
+    .apply-target { min-height: 42px; padding: 0 15px; border: 0; border-radius: 11px; background: var(--blue); color: white; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform .16s ease, background .16s ease; }
+    .apply-target:hover { transform: translateY(-1px); background: #1766da; }
+    .apply-target:focus-visible { outline: 3px solid rgba(38,118,239,.3); outline-offset: 2px; }
     .arena-wrap { position: relative; padding: 12px; background: #e9f1f5; }
     canvas { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; border-radius: 17px; touch-action: none; cursor: crosshair; outline: none; }
     canvas:focus-visible { box-shadow: 0 0 0 4px rgba(38,118,239,.25); }
@@ -94,6 +103,8 @@
       .hero { display: block; margin-bottom: 18px; }
       .hero-copy { max-width: 360px; margin-top: 13px; }
       .game-head { padding: 14px 15px; }
+      .target-editor { align-items: stretch; flex-direction: column; gap: 9px; padding: 14px 15px; }
+      .target-edit-fields { width: 100%; }
       .arena-wrap { padding: 7px; }
       .arena-hint { left: 15px; bottom: 15px; padding: 7px 9px; font-size: 9px; }
       .below-game { padding: 15px; }
@@ -126,7 +137,7 @@
     <section class="hero" aria-labelledby="page-title">
       <div>
         <p class="eyebrow">Полигон открыт</p>
-        <h1 id="page-title">ПРИЦЕЛЬСЯ.<br>ПОПАДИ В <span>«С».</span></h1>
+        <h1 id="page-title">ПРИЦЕЛЬСЯ.<br>ПОПАДИ В <span id="targetHeadline">«С».</span></h1>
       </div>
       <p class="hero-copy">Выбирай самый убедительный снаряд, натягивай рогатку и отправляй его точно в синюю мишень.</p>
     </section>
@@ -136,8 +147,8 @@
         <div class="stage-label"><span class="stage-dot"></span> ПОЛИГОН № 01</div>
         <div class="game-state" id="gameState" aria-live="polite">Мишень готова к атаке</div>
       </div>
-      <div class="arena-wrap">
-        <canvas id="game" width="960" height="480" tabindex="0" aria-label="Игровое поле. Зажми снаряд у рогатки, потяни назад и отпусти, чтобы попасть в синюю мишень с буквой С."></canvas>
+      <div class="target-editor">\n        <div><label for="targetInput">СЛОВО ИЛИ ИМЯ ДЛЯ МИШЕНИ</label><small>Напиши, что должно появиться в синем круге</small></div>\n        <div class="target-edit-fields"><input id="targetInput" type="text" maxlength="18" value="С" placeholder="Например, МАКС" aria-label="Слово или имя на мишени"><button class="apply-target" id="applyTarget" type="button">Изменить мишень</button></div>\n      </div>\n      <div class="arena-wrap">
+        <canvas id="game" width="960" height="480" tabindex="0" aria-label="Игровое поле. Зажми снаряд у рогатки, потяни назад и отпусти, чтобы попасть в синюю мишень с надписью С."></canvas>
         <div class="arena-hint"><b>↖</b> ЗАЖМИ · ПОТЯНИ НАЗАД · ОТПУСТИ</div>
       </div>
       <div class="below-game">
@@ -204,6 +215,7 @@
       };
 
       let selected = "tomato";
+      let targetText = "С";
       let aiming = false;
       let aimPoint = { x: LAUNCH.x - 90, y: LAUNCH.y - 32 };
       let pointerId = null;
@@ -218,12 +230,35 @@
       const gameState = $("gameState");
       const statusTitle = $("statusTitle");
       const statusCopy = $("statusCopy");
+      const targetInput = $("targetInput");
+      const targetHeadline = $("targetHeadline");
 
       function setMessage(title, copy, state) {
         statusTitle.textContent = title;
         statusCopy.textContent = copy;
         if (state) gameState.textContent = state;
       }
+
+      function applyTarget() {
+        const value = targetInput.value.trim().replace(/\s+/g, " ");
+        if (!value) {
+          targetInput.setCustomValidity("Введи слово или имя для мишени.");
+          targetInput.reportValidity();
+          targetInput.addEventListener("input", () => targetInput.setCustomValidity(""), { once: true });
+          return;
+        }
+        targetText = Array.from(value).slice(0, 18).join("");
+        targetInput.value = targetText;
+        targetHeadline.textContent = "«" + targetText + "».";
+        canvas.setAttribute("aria-label", "Игровое поле. Зажми снаряд у рогатки, потяни назад и отпусти, чтобы попасть в синюю мишень с надписью " + targetText + ".");
+        setMessage("Новая мишень: " + targetText, "Теперь попробуй попасть прямо в своё слово или имя!", "Цель изменена");
+        draw();
+      }
+
+      $("applyTarget").addEventListener("click", applyTarget);
+      targetInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") applyTarget();
+      });
 
       function updateStats() {
         $("score").textContent = score;
@@ -478,10 +513,16 @@
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "950 94px Inter, system-ui, sans-serif";
+        let fontSize = 86;
+        const maxTextWidth = TARGET.r * 1.55;
+        ctx.font = "950 " + fontSize + "px Inter, system-ui, sans-serif";
+        while (ctx.measureText(targetText).width > maxTextWidth && fontSize > 18) {
+          fontSize -= 2;
+          ctx.font = "950 " + fontSize + "px Inter, system-ui, sans-serif";
+        }
         ctx.shadowColor = "rgba(12,52,117,.15)";
         ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-        ctx.fillText("С", 0, 4);
+        ctx.fillText(targetText, 0, 4, maxTextWidth);
         ctx.restore();
 
         ctx.fillStyle = "#235a9f";
